@@ -2,7 +2,6 @@ import java.security.MessageDigest
 
 plugins {
     alias(libs.plugins.android)
-    alias(libs.plugins.kotlin)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.serialization)
     alias(libs.plugins.ksp)
@@ -10,7 +9,7 @@ plugins {
 android {
     buildFeatures { compose = true }
     namespace = "ru.steno"
-    compileSdk = 35
+    compileSdk = 37
     defaultConfig {
         applicationId = "ru.steno"
         minSdk = 26
@@ -25,27 +24,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
     packaging { resources.excludes += "META-INF/DEPENDENCIES" }
     testOptions.unitTests.all { it.useJUnitPlatform() }
-    testBuildType = "release"
     buildTypes {
         release {
-            // Debug-вариант удалён, поэтому release подписывается отладочным ключом.
+            // Release можно установить локально: подпись отладочным ключом.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
 
-// Debug-сборка удалена: единственный вариант — release.
-androidComponents {
-    beforeVariants(selector().withBuildType("debug")) { variantBuilder ->
-        variantBuilder.enable = false
-    }
-}
-
 dependencies {
     implementation(libs.navigation3.runtime)
+    implementation(libs.navigation3.ui)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(files("libs/sherpa.aar"))
@@ -55,6 +46,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
     implementation(libs.koin.androidx.workmanager)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.media3.exoplayer)
@@ -69,6 +61,8 @@ dependencies {
 
 // Тестовые двойники платформенных классов не входят в поставляемый APK.
 dependencies {
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.compose.ui.tooling.preview)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
 }
