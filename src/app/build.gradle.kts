@@ -3,7 +3,7 @@ import java.security.MessageDigest
 plugins {
     alias(libs.plugins.android)
     alias(libs.plugins.kotlin)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.1.20"
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.serialization)
     alias(libs.plugins.ksp)
 }
@@ -28,34 +28,49 @@ android {
     kotlinOptions { jvmTarget = "17" }
     packaging { resources.excludes += "META-INF/DEPENDENCIES" }
     testOptions.unitTests.all { it.useJUnitPlatform() }
+    testBuildType = "release"
+    buildTypes {
+        release {
+            // Debug-вариант удалён, поэтому release подписывается отладочным ключом.
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
 }
+
+// Debug-сборка удалена: единственный вариант — release.
+androidComponents {
+    beforeVariants(selector().withBuildType("debug")) { variantBuilder ->
+        variantBuilder.enable = false
+    }
+}
+
 dependencies {
-    implementation("androidx.navigation3:navigation3-runtime:1.0.0-alpha02")
-    debugImplementation("androidx.activity:activity-compose:1.10.1")
-    debugImplementation("androidx.compose.material3:material3:1.3.2")
+    implementation(libs.navigation3.runtime)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.material3)
     implementation(files("libs/sherpa.aar"))
-    implementation("com.google.mediapipe:tasks-genai:${libs.versions.llm.get()}")
-    implementation("androidx.room:room-runtime:${libs.versions.room.get()}")
-    implementation("androidx.room:room-ktx:${libs.versions.room.get()}")
-    ksp("androidx.room:room-compiler:${libs.versions.room.get()}")
-    implementation("androidx.work:work-runtime-ktx:${libs.versions.work.get()}")
-    implementation("io.insert-koin:koin-android:${libs.versions.koin.get()}")
-    implementation("io.insert-koin:koin-androidx-workmanager:${libs.versions.koin.get()}")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
-    implementation("androidx.media3:media3-exoplayer:${libs.versions.media.get()}")
-    implementation("androidx.datastore:datastore-preferences:1.1.7")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
-    implementation("androidx.compose.runtime:runtime:1.7.8")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.0.1")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test:runner:1.6.2")
+    implementation(libs.mediapipe.tasks.genai)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.workmanager)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.compose.runtime)
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }
 
 // Тестовые двойники платформенных классов не входят в поставляемый APK.
 dependencies {
-    testImplementation("io.mockk:mockk:1.13.17")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 val verifyModels by tasks.registering {
