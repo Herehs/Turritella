@@ -45,7 +45,7 @@ fun ZoomDrawer(
 
     // Масштабирование
     val scale by animateFloatAsState(
-        targetValue = if (isMenuOpen) 0.74f else 1f,
+        targetValue = if (isMenuOpen) 0.9f else 1f,
         animationSpec = tween(durationMillis = 300),
         label = "scale"
     )

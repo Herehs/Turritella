@@ -73,6 +73,7 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import ru.steno.StenoApp
 import ru.steno.domain.*
+import ru.steno.presentation.settings.SettingsViewModel
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -98,8 +99,10 @@ fun MainScreenRoute(
     onOpenRecording: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = koinViewModel(),
+    settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -112,6 +115,9 @@ fun MainScreenRoute(
         // null = пользователь отменил выбор, VM тоже должен об этом узнать
         viewModel.onIntent(MainIntent.AudioPicked(uri?.toString()))
     }
+
+    val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
+    var settingsOpen by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
@@ -128,8 +134,13 @@ fun MainScreenRoute(
     }
 
     ZoomDrawer(
+        isMenuOpen = settingsOpen,
+        onCloseMenu = { settingsOpen = false },
         menuContent = {
-            DrawerContent()
+            DrawerContent(
+                state = settingsState,
+                onIntent = settingsViewModel::onIntent
+            )
         },
         mainContent = {
             MainScreen(
@@ -137,10 +148,9 @@ fun MainScreenRoute(
                 snackbarHostState = snackbarHostState,
                 onIntent = viewModel::onIntent,
                 modifier = modifier,
+                onMenuClick = {settingsOpen = !settingsOpen}
             )
         },
-        isMenuOpen = true,
-        onCloseMenu = {},
         gesturesEnabled = true
     )
 
