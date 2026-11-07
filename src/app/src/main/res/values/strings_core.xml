@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_title">Нейро-стенографист</string>
+    <string name="processing">Обработка аудио</string>
+    <string name="download_whisper">Загрузка Whisper</string>
+    <string name="cancel">Отменить</string>
+    <string name="recording">Запись диалога</string>
+    <string name="recording_title">Запись %1$s</string>
+    <string name="speaker">Участник %1$d</string>
+    <string name="participants">Участников: %1$d</string>
+    <string-array name="stages">
+        <item>Подготовка моделей</item><item>Подготовка аудио</item><item>Поиск говорящих</item>
+        <item>Распознавание речи</item><item>Пунктуация</item><item>Сохранение</item>
+    </string-array>
+</resources>

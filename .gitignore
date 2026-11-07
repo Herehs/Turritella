@@ -1,0 +1,13 @@
+.gradle/
+build/
+.idea/
+local.properties
+*.iml
+src/app/src/main/assets/models/
+src/app/libs/*.aar
+*.part
+artifacts/*.apk
+artifacts/device-results/
+__pycache__/
+.codex
+.agents
