@@ -13,9 +13,17 @@ class Settings(private val context: Context) {
     val flow = context.preferences.data.map {
         AppSettings(it.read("theme",ThemeMode.SYSTEM), it.read("export",ExportFormat.JSON),
             it.read("asr",AsrModelType.GIGA_AM), it.read("layout",NotesLayout.GRID), it.read("sort",NoteSort.DATE_DESC),
-            it[booleanPreferencesKey("punctuation")] ?: true, it[intPreferencesKey("speakers")])
+            it[booleanPreferencesKey("punctuation")] ?: true, it[intPreferencesKey("speakers")],
+            it[stringSetPreferencesKey("favorites")].orEmpty().mapNotNull(String::toLongOrNull).toSet())
     }
     suspend fun set(key: String, value: Enum<*>) { context.preferences.edit { it[stringPreferencesKey(key)] = value.name } }
+    suspend fun toggleFavorite(id: Long) {
+        context.preferences.edit { prefs ->
+            val key = stringSetPreferencesKey("favorites")
+            val ids = prefs[key].orEmpty()
+            prefs[key] = if (id.toString() in ids) ids - id.toString() else ids + id.toString()
+        }
+    }
     suspend fun punctuation(enabled: Boolean) { context.preferences.edit { it[booleanPreferencesKey("punctuation")] = enabled } }
     suspend fun speakers(count: Int?) {
         require(count == null || count > 0)

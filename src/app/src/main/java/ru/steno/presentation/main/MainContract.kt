@@ -6,7 +6,8 @@ import ru.steno.presentation.UiMessage
 import ru.steno.data.audio.RecorderStatus
 
 data class NoteItem(val id: Long, val title: String, val createdAt: Long, val durationMs: Long,
-    val status: ProcessingStatus, val progress: TranscriptionProgress?, val speakerCount: Int?, val preview: String)
+    val status: ProcessingStatus, val progress: TranscriptionProgress?, val speakerCount: Int?, val preview: String,
+    val isFavorite: Boolean = false)
 sealed interface ModelsPreparation {
     data object Ready : ModelsPreparation
     data class Preparing(val fraction: Float) : ModelsPreparation
@@ -32,6 +33,8 @@ sealed interface ModelsPreparation {
 )
 
 sealed interface MainIntent {
+    /** Переключить сохранённую отметку избранного. */
+    data class FavoriteClicked(val id: Long) : MainIntent
     /** Отправить при изменении поиска. */
     data class QueryChanged(val text: String) : MainIntent
     /** Сохранить вид списка. */

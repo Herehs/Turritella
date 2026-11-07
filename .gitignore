@@ -11,3 +11,6 @@ artifacts/device-results/
 __pycache__/
 .codex
 .agents
+
+.model-downloads/
+.toolchain/

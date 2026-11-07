@@ -49,6 +49,15 @@ class ScreenTest {
         assertFalse(vm.state.value.isImporting)
     }
 
+    @Test fun favoriteUsesPersistentSettings() = runTest(dispatcher) {
+        every { app.notes.search(any()) } returns flowOf(emptyList())
+        every { app.models } returns MutableStateFlow(ModelsPreparation.Ready)
+        val vm = MainViewModel(app)
+        vm.onIntent(MainIntent.FavoriteClicked(42))
+        runCurrent()
+        coVerify(exactly=1) { app.settings.toggleFavorite(42) }
+    }
+
     @Test fun missingWhisper() = runTest(dispatcher) {
         every { app.whisper.state } returns flowOf(WhisperModelState.NotInstalled())
         every { app.whisper.installed } returns false

@@ -1,0 +1,242 @@
+[
+  {
+    "resource": "hex_421_4050_arrows_sort",
+    "width": "24",
+    "height": "26",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_421_4050_calendar",
+    "width": "16",
+    "height": "16",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_421_4050_clock",
+    "width": "16",
+    "height": "16",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_421_4050_layout_grid",
+    "width": "24",
+    "height": "24",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_421_4050_menu2",
+    "width": "30",
+    "height": "25",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_421_4050_plus",
+    "width": "30",
+    "height": "30",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_421_4050_star",
+    "width": "18",
+    "height": "18",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_421_4050_star1",
+    "width": "18",
+    "height": "18",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_421_4050_users",
+    "width": "16",
+    "height": "16",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_421_4137_arrow_back_up",
+    "width": "30",
+    "height": "30",
+    "callsites": [
+      "HexTheme.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4813_arrows_sort",
+    "width": "24",
+    "height": "26",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4813_calendar",
+    "width": "16",
+    "height": "16",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4813_clock",
+    "width": "16",
+    "height": "16",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4813_layout_grid",
+    "width": "24",
+    "height": "24",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4813_menu2",
+    "width": "30",
+    "height": "25",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4813_plus",
+    "width": "30",
+    "height": "30",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4813_star",
+    "width": "18",
+    "height": "18",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4813_star1",
+    "width": "18",
+    "height": "18",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4813_users",
+    "width": "16",
+    "height": "16",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4838_layout_list",
+    "width": "24",
+    "height": "24",
+    "callsites": [
+      "MainScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4877_player_record_filled",
+    "width": "36",
+    "height": "36",
+    "callsites": [
+      "RecordingScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4900_arrow_back_up",
+    "width": "30",
+    "height": "30",
+    "callsites": [
+      "HexTheme.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4900_player_pause_filled",
+    "width": "24",
+    "height": "24",
+    "callsites": [
+      "RecordingScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4900_player_stop_filled",
+    "width": "36",
+    "height": "36",
+    "callsites": [
+      "RecordingScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4963_brain",
+    "width": "24",
+    "height": "24",
+    "callsites": [
+      "SettingsDrawer.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4963_palette",
+    "width": "24",
+    "height": "24",
+    "callsites": [
+      "SettingsDrawer.kt"
+    ]
+  },
+  {
+    "resource": "hex_431_4963_vector",
+    "width": "47",
+    "height": "60",
+    "callsites": [
+      "SettingsDrawer.kt"
+    ]
+  },
+  {
+    "resource": "hex_433_5763_file_download",
+    "width": "30",
+    "height": "30",
+    "callsites": [
+      "NoteScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_433_5763_multiplier1_x",
+    "width": "50",
+    "height": "50",
+    "callsites": [
+      "NoteScreen.kt"
+    ]
+  },
+  {
+    "resource": "hex_433_5763_player_pause_filled",
+    "width": "40",
+    "height": "40",
+    "callsites": [
+      "NoteScreen.kt"
+    ]
+  }
+]

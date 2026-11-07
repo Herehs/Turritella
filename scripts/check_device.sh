@@ -3,7 +3,7 @@
 set -eu -o pipefail
 cd "$(dirname "$0")/.."
 [[ $# == 1 && -f "$1" ]] || { echo 'Передайте путь к записи диалога в WAV.' >&2; exit 2; }
-adb install -r artifacts/neuro-steno-debug.apk
+adb install -r artifacts/neuro-steno-hexteam.apk
 adb install -r artifacts/neuro-steno-test.apk
 dir=/sdcard/Android/data/ru.steno/files
 adb shell am start -W -n ru.steno/.MainActivity >/dev/null

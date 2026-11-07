@@ -27,7 +27,7 @@ class MainViewModel(private val app: StenoApp) : ScreenModel<MainState,MainInten
                 }
                 state.value.copy(notes=sorted.map { n -> NoteItem(n.id,n.title,n.createdAt,n.durationMs,n.status,
                     TranscriptionProgress(n.stage,n.fraction).takeIf { n.status == ProcessingStatus.PROCESSING },
-                    n.speakerCount.takeIf { n.status == ProcessingStatus.DONE },n.preview) },
+                    n.speakerCount.takeIf { n.status == ProcessingStatus.DONE },n.preview,n.id in settings.favoriteNoteIds) },
                     layout=settings.layout,sort=settings.sort,isLoading=false,hasActiveRecording=recording.status != RecorderStatus.IDLE)
             }.collect { snapshot -> reduce { it.copy(notes=snapshot.notes,layout=snapshot.layout,sort=snapshot.sort,
                 isLoading=false,hasActiveRecording=snapshot.hasActiveRecording) } }
@@ -35,6 +35,7 @@ class MainViewModel(private val app: StenoApp) : ScreenModel<MainState,MainInten
     }
     override fun onIntent(intent: MainIntent) {
         when(intent) {
+            is MainIntent.FavoriteClicked -> viewModelScope.launch { app.settings.toggleFavorite(intent.id) }
             is MainIntent.QueryChanged -> { reduce { it.copy(query=intent.text) }; query.value=intent.text }
             is MainIntent.LayoutSelected -> viewModelScope.launch { app.settings.set("layout",intent.layout) }
             is MainIntent.SortSelected -> viewModelScope.launch { app.settings.set("sort",intent.sort) }
