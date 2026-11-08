@@ -11,3 +11,5 @@ artifacts/device-results/
 __pycache__/
 .codex
 .agents
+
+.kotlin/

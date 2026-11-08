@@ -13,7 +13,7 @@ class TranscriptTest {
         assertEquals("двадцать три",guardPunctuation("двадцать три","23."))
     }
     @Test fun speechIsClippedAndSmoothed() {
-        assertEquals(listOf(Region(20,10000,4),Region(10000,11000,4),Region(11000,19000,4)),
+        assertEquals(listOf(Region(20,19000,4)),
             speechTurns(listOf(Region(20,19000)),listOf(Region(0,10000,4),Region(10000,11000,9),Region(11000,20000,4)),20000))
     }
     @Test fun chronologicalIdsAndMerge() {

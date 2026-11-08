@@ -69,8 +69,10 @@ class AudioFiles(private val context: Context) {
                 var previous = 0f
                 var ended = false
                 val info = MediaCodec.BufferInfo()
+                val watchdog = DecodeWatchdog(android.os.SystemClock.elapsedRealtime())
                 while (true) {
                     currentCoroutineContext().ensureActive()
+                    watchdog.check(android.os.SystemClock.elapsedRealtime())
                     if (!ended) {
                         val i = decoder.dequeueInputBuffer(10000)
                         if (i >= 0) {
@@ -79,15 +81,18 @@ class AudioFiles(private val context: Context) {
                             ended = n < 0
                             decoder.queueInputBuffer(i, 0, n.coerceAtLeast(0), extractor.sampleTime.coerceAtLeast(0),
                                 if (ended) MediaCodec.BUFFER_FLAG_END_OF_STREAM else 0)
+                            watchdog.advanced(android.os.SystemClock.elapsedRealtime())
                             if (!ended) extractor.advance()
                         }
                     }
                     val i = decoder.dequeueOutputBuffer(info, 10000)
                     if (i < 0) continue
                     if (info.size > 0) {
+                        watchdog.advanced(android.os.SystemClock.elapsedRealtime())
                         val format = decoder.getOutputFormat(i)
                         val channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
                         val rate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+                        if (channels <= 0 || rate <= 0) throw ProcessingException(ProcessingError.UNSUPPORTED_FORMAT)
                         val encoding = if (format.containsKey(MediaFormat.KEY_PCM_ENCODING))
                             format.getInteger(MediaFormat.KEY_PCM_ENCODING) else AudioFormat.ENCODING_PCM_16BIT
                         val width = when (encoding) {

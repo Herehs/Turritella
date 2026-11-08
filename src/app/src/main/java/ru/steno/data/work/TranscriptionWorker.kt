@@ -110,12 +110,14 @@ class TranscriptionWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
                     clockMs = { clock }
                 )
                 val result = pipeline(settings.punctuationEnabled,::update)
+                val saveStart = clock
+                if (!app.notes.save(id,result.turns,saveStart-start,result.durationMs)) return@withLock Result.success()
                 val total = clock-start
-                app.notes.save(id,result.turns,total,result.durationMs)
+                app.notes.saveElapsed(id,total)
                 // Отказ внешнего каталога не должен испортить готовую заметку.
                 runCatching {
                     val dir = requireNotNull(app.getExternalFilesDir("debug"))
-                    val metrics = org.json.JSONObject(result.timings).put("totalMs",total)
+                    val metrics = org.json.JSONObject(result.timings).put("saveMs",total-(saveStart-start)).put("totalMs",total)
                         .put("durationMs",result.durationMs).put("model",actualModel.name)
                         .put("punctuationEnabled",settings.punctuationEnabled)
                         .put("rtf",total.toDouble()/result.durationMs.coerceAtLeast(1))

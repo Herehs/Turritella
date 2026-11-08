@@ -21,26 +21,47 @@ fun guardPunctuation(source: String, answer: String): String {
     return if (words(source) == words(answer)) answer.trim() else source
 }
 
+/** Убирает пустые интервалы и объединяет пересечения одного говорящего. */
+private fun unionRegions(regions: List<Region>, size: Int): List<Region> {
+    val valid = regions.map { it.copy(start = it.start.coerceIn(0, size), end = it.end.coerceIn(0, size)) }
+        .filter { it.start < it.end }
+    return valid.groupBy { it.speaker }.values.flatMap { group ->
+        val result = mutableListOf<Region>()
+        for (region in group.sortedBy { it.start }) {
+            val previous = result.lastOrNull()
+            if (previous != null && region.start <= previous.end) {
+                result[result.lastIndex] = previous.copy(end = maxOf(previous.end, region.end))
+            } else result += region
+        }
+        result
+    }.sortedBy { it.start }
+}
+
 /** Интервалы полуоткрытые, единица до вызова ASR — один сэмпл. */
 fun speechTurns(speech: List<Region>, speakers: List<Region>, size: Int): List<Region> {
-    val sorted = speakers.sortedBy { it.start }
+    require(size >= 0)
+    val sorted = unionRegions(speakers, size)
     val stable = sorted.mapIndexed { i, turn ->
         val previous = sorted.getOrNull(i - 1)
         val next = sorted.getOrNull(i + 1)
-        if (previous != null && previous.speaker == next?.speaker && turn.end - turn.start < SHORT_TURN)
+        // Паузы и перекрытия не являются коротким переключением внутри одной реплики.
+        if (previous != null && next != null && previous.speaker == next.speaker &&
+            previous.end == turn.start && turn.end == next.start && turn.end - turn.start < SHORT_TURN)
             turn.copy(speaker = previous.speaker) else turn
     }
+    val diarized = unionRegions(stable, size)
+    val voices = unionRegions(speech.map { it.copy(speaker = 0) }, size)
     val chunks = mutableListOf<Region>()
     var first = 0
-    for (voice in speech.sortedBy { it.start }) {
-        while (first < stable.size && stable[first].end <= voice.start) first++
-        for (i in first until stable.size) {
-            val turn = stable[i]
+    for (voice in voices) {
+        while (first < diarized.size && diarized[first].end <= voice.start) first++
+        for (i in first until diarized.size) {
+            val turn = diarized[i]
             if (turn.start >= voice.end) break
-            var start = maxOf(0, voice.start, turn.start)
-            val end = minOf(size, voice.end, turn.end)
+            var start = maxOf(voice.start, turn.start)
+            val end = minOf(voice.end, turn.end)
             while (start < end) {
-                val limit = minOf(end, start + MAX_CHUNK)
+                val limit = start + minOf(end - start, MAX_CHUNK)
                 chunks += Region(start, limit, turn.speaker)
                 start = limit
             }

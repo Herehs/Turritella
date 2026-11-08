@@ -44,10 +44,14 @@ abstract class Notes {
     @Insert abstract suspend fun insertTurns(turns: List<Turn>)
     @Query("UPDATE notes SET status='DONE',fraction=1,error=NULL,totalMs=:ms,speakerCount=:speakers,preview=:preview,durationMs=:duration WHERE id=:id AND status='PROCESSING'")
     abstract suspend fun finish(id: Long,ms: Long,speakers: Int,preview: String,duration: Long): Int
-    @Transaction open suspend fun save(id: Long, result: List<Utterance>, ms: Long, duration: Long) {
-        if (finish(id, ms, result.distinctBy { it.speaker }.size, result.first().text.take(160), duration) == 0) return
+    @Query("UPDATE notes SET totalMs=:ms WHERE id=:id AND status='DONE'")
+    abstract suspend fun saveElapsed(id: Long, ms: Long)
+    @Transaction open suspend fun save(id: Long, result: List<Utterance>, ms: Long, duration: Long): Boolean {
+        require(result.isNotEmpty())
+        if (finish(id, ms, result.distinctBy { it.speaker }.size, result.first().text.take(160), duration) == 0) return false
         clearTurns(id)
         insertTurns(result.mapIndexed { i, t -> Turn(id,i,t.speaker,t.startMs,t.endMs,t.text) })
+        return true
     }
 }
 
