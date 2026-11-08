@@ -7,13 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
@@ -25,6 +26,9 @@ import ru.steno.presentation.main.MainScreenRoute
 import ru.steno.presentation.navigation.MainRoute
 import ru.steno.presentation.navigation.NoteRoute
 import ru.steno.presentation.navigation.RecordingRoute
+import ru.steno.presentation.StenoTheme
+import ru.steno.presentation.note.NoteScreenRoute
+import ru.steno.presentation.recording.RecordingScreenRoute
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,8 +39,9 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun App() {
-    MaterialTheme {
-        val appViewModel: AppViewModel = koinViewModel()
+    val appViewModel: AppViewModel = koinViewModel()
+    val state by appViewModel.state.collectAsStateWithLifecycle()
+    StenoTheme(state.themeMode) {
         NavHost()
     }
 }
@@ -52,46 +57,23 @@ private fun NavHost() {
             entry<MainRoute> {
                 MainScreenRoute(
                     onOpenRecording = { backStack.add(RecordingRoute) },
-                    onOpenNote = { id -> },
+                    onOpenNote = { id -> backStack.add(NoteRoute(id))},
                 )
             }
 
             entry<RecordingRoute> {
-                // TODO: заменить на RecordingScreen(
-                //     onBack = { backStack.removeLastOrNull() },
-                //     onOpenNote = { id -> backStack[backStack.lastIndex] = NoteRoute(id) },
-                // )
-                PlaceholderScreen(
-                    title = "Запись диалога",
+                RecordingScreenRoute(
                     onBack = { backStack.removeLastOrNull() },
+                    onOpenNote = { id -> backStack[backStack.lastIndex] = NoteRoute(id) },
                 )
             }
 
             entry<NoteRoute> { route ->
-                // TODO: заменить на NoteScreen(noteId = route.noteId, onBack = { ... })
-                PlaceholderScreen(
-                    title = "Заметка ${route.noteId}",
-                    onBack = { backStack.removeLastOrNull() },
+                NoteScreenRoute(
+                    noteId = route.noteId,
+                    onBack = { backStack.removeLastOrNull() }
                 )
             }
         },
     )
-}
-
-@Composable
-private fun PlaceholderScreen(
-    title: String,
-    onBack: (() -> Unit)? = null,
-    actions: @Composable () -> Unit = {},
-) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        if (onBack != null) {
-            TextButton(onClick = onBack) { Text("Назад") }
-        }
-        Text(title, style = MaterialTheme.typography.headlineMedium)
-        actions()
-    }
 }

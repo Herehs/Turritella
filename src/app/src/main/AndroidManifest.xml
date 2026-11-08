@@ -6,15 +6,39 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <application android:name=".StenoApp" android:label="@string/app_title" android:allowBackup="false" android:theme="@android:style/Theme.Material.Light.NoActionBar">
-        <provider android:name="androidx.startup.InitializationProvider" android:authorities="${applicationId}.androidx-startup" android:exported="false" tools:node="merge">
-            <meta-data android:name="androidx.work.WorkManagerInitializer" tools:node="remove"/>
+    <application
+        android:name=".StenoApp"
+        android:label="@string/app_title"
+        android:allowBackup="false"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false" tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                tools:node="remove"/>
         </provider>
-        <activity android:name=".MainActivity" android:exported="true">
-            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action
+                    android:name="android.intent.action.MAIN"/>
+                <category
+                    android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
         </activity>
-        <service android:name="androidx.work.impl.foreground.SystemForegroundService" android:foregroundServiceType="dataSync|mediaProcessing" tools:node="merge"/>
-        <service android:name=".data.audio.RecordingService" android:exported="false" android:foregroundServiceType="microphone"/>
-        <receiver android:name=".data.work.CancelReceiver" android:exported="false"/>
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync|mediaProcessing"
+            tools:node="merge"/>
+        <service
+            android:name=".data.audio.RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="microphone"/>
+        <receiver
+            android:name=".data.work.CancelReceiver"
+            android:exported="false"/>
     </application>
 </manifest>

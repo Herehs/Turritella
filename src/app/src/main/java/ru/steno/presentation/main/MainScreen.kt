@@ -1,7 +1,17 @@
 package ru.steno.presentation.main
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -26,7 +36,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,6 +50,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,11 +64,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -67,32 +80,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import ru.steno.StenoApp
+import ru.steno.R
 import ru.steno.domain.*
 import ru.steno.presentation.settings.SettingsViewModel
+import ru.steno.presentation.StenoTheme
+import ru.steno.presentation.settings.Settings
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
-// Цвета из макета. Когда будет готова тема — перенесите в неё.
-private val ScreenBackground = Color(0xFFE9ECEF)
-private val TextPrimary = Color(0xFF131A26)
-private val TextSecondary = Color(0xFF7A8699)
-private val Accent = Color(0xFF2F6BFF)
-
 private val CardShape = RoundedCornerShape(10.dp)
 
-// ───────────────────────────── Route ─────────────────────────────
-
-/**
- * Связывает [MainViewModel] с UI: подписка на состояние, обработка эффектов,
- * системный выбор файла и snackbar. Навигация приходит колбэками снаружи (NavDisplay).
- */
 @Composable
 fun MainScreenRoute(
     onOpenNote: (Long) -> Unit,
@@ -112,7 +113,6 @@ fun MainScreenRoute(
     val audioPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),
     ) { uri ->
-        // null = пользователь отменил выбор, VM тоже должен об этом узнать
         viewModel.onIntent(MainIntent.AudioPicked(uri?.toString()))
     }
 
@@ -126,7 +126,6 @@ fun MainScreenRoute(
                 MainEffect.OpenRecording -> currentOnOpenRecording()
                 is MainEffect.PickAudio -> audioPicker.launch(effect.mimeTypes.toTypedArray())
                 is MainEffect.ShowMessage -> scope.launch {
-                    // TODO: подставьте ваш маппинг UiMessage -> строка
                     snackbarHostState.showSnackbar(effect.message.toString())
                 }
             }
@@ -137,7 +136,7 @@ fun MainScreenRoute(
         isMenuOpen = settingsOpen,
         onCloseMenu = { settingsOpen = false },
         menuContent = {
-            DrawerContent(
+            Settings(
                 state = settingsState,
                 onIntent = settingsViewModel::onIntent
             )
@@ -153,10 +152,7 @@ fun MainScreenRoute(
         },
         gesturesEnabled = true
     )
-
 }
-
-// ───────────────────────────── Screen ─────────────────────────────
 
 @Composable
 fun MainScreen(
@@ -164,20 +160,24 @@ fun MainScreen(
     snackbarHostState: SnackbarHostState,
     onIntent: (MainIntent) -> Unit,
     modifier: Modifier = Modifier,
-    onMenuClick: () -> Unit = {}, // в макете есть «гамбургер», но интента под него нет
+    onMenuClick: () -> Unit = {},
 ) {
     var noteToDelete by rememberSaveable { mutableStateOf<Long?>(null) }
+    var fabExpanded by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = fabExpanded) { fabExpanded = false }
 
     Scaffold(
         modifier = modifier,
-        containerColor = ScreenBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             MainFabs(
+                expanded = fabExpanded,
                 hasActiveRecording = state.hasActiveRecording,
                 isImporting = state.isImporting,
-                onRecordClick = { onIntent(MainIntent.RecordClicked) },
-                onImportClick = { onIntent(MainIntent.ImportAudioClicked) },
+                onToggle = { fabExpanded = !fabExpanded },
+                onRecordClick = { fabExpanded = false; onIntent(MainIntent.RecordClicked) },
+                onImportClick = { fabExpanded = false; onIntent(MainIntent.ImportAudioClicked) },
             )
         },
     ) { padding ->
@@ -204,7 +204,7 @@ fun MainScreen(
                 modifier = Modifier.padding(start = 15.dp, end = 15.dp, bottom = 10.dp),
             )
 
-            Box(Modifier.weight(1f)) {
+            Box(Modifier.weight(1f).fillMaxWidth()) {
                 when {
                     state.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                     state.notes.isEmpty() -> EmptyState(
@@ -241,8 +241,6 @@ fun MainScreen(
     }
 }
 
-// ───────────────────────────── Top bar ─────────────────────────────
-
 @Composable
 private fun TopBar(
     query: String,
@@ -260,7 +258,7 @@ private fun TopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onMenuClick, modifier = Modifier.size(40.dp)) {
-            Icon(Icons.Default.Menu, contentDescription = "Меню", tint = TextPrimary)
+            Icon(painterResource(R.drawable.ic_menu_2), contentDescription = "Меню", tint = StenoTheme.colors.text)
         }
         Spacer(Modifier.size(10.dp))
         SearchPill(
@@ -285,14 +283,14 @@ private fun SearchPill(
     onSortSelected: (NoteSort) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val textStyle = TextStyle(color = TextPrimary, fontSize = 18.sp)
+    val textStyle = TextStyle(color = StenoTheme.colors.text, fontSize = 18.sp)
     var sortMenuOpen by remember { mutableStateOf(false) }
 
     Row(
         modifier
             .height(50.dp)
             .clip(CircleShape)
-            .background(Color.White)
+            .background(StenoTheme.colors.surface)
             .padding(start = 20.dp, end = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -301,39 +299,46 @@ private fun SearchPill(
             onValueChange = onQueryChange,
             singleLine = true,
             textStyle = textStyle,
-            cursorBrush = SolidColor(Accent),
+            cursorBrush = SolidColor(StenoTheme.colors.accent),
             modifier = Modifier.weight(1f),
             decorationBox = { inner ->
                 Box(contentAlignment = Alignment.CenterStart) {
                     if (query.isEmpty()) {
-                        Text("Поиск..", style = textStyle.copy(color = TextSecondary))
+                        Text("Поиск..", style = textStyle.copy(color = StenoTheme.colors.textSecondary))
                     }
                     inner()
                 }
             },
         )
 
-        // Иконка показывает вид, НА который переключаемся (как в макетах).
         val isGrid = layout == NotesLayout.GRID
         IconButton(onClick = {
             val all = NotesLayout.entries
             onLayoutSelected(all[(layout.ordinal + 1) % all.size])
         }) {
             Icon(
-                imageVector = if (isGrid) Icons.Outlined.Place else Icons.Outlined.Place,
+                painter = if (isGrid) painterResource(R.drawable.ic_layout_grid) else painterResource(R.drawable.ic_layout_list),
                 contentDescription = "Сменить вид списка",
-                tint = TextSecondary,
+                tint = StenoTheme.colors.textSecondary,
             )
         }
 
         Box {
             IconButton(onClick = { sortMenuOpen = true }) {
-                Icon(Icons.Outlined.Place, "Сортировка", tint = TextSecondary)
+                Icon(painter = painterResource(R.drawable.ic_arrows_sort), "Сортировка", tint = StenoTheme.colors.textSecondary)
             }
             DropdownMenu(expanded = sortMenuOpen, onDismissRequest = { sortMenuOpen = false }) {
                 NoteSort.entries.forEach { option ->
+                    val label = when(option){
+                        NoteSort.DATE_DESC -> "Дата по убыванию"
+                        NoteSort.DATE_ASC -> "Дата по возрастанию"
+                        NoteSort.TITLE_ASC -> "Название А–Я"
+                        NoteSort.TITLE_DESC -> "Название Я–А"
+                        NoteSort.DURATION_DESC -> "Длительность по убыванию"
+                        NoteSort.DURATION_ASC -> "Длительность по возрастанию"
+                    }
                     DropdownMenuItem(
-                        text = { Text(option.label()) },
+                        text = { Text(label) },
                         trailingIcon = {
                             if (option == sort) Icon(Icons.Default.Check, contentDescription = null)
                         },
@@ -348,19 +353,16 @@ private fun SearchPill(
     }
 }
 
-/** Подписи порядка сортировки. Добавьте свои значения [NoteSort]. */
 private fun NoteSort.label(): String = when (this) {
     NoteSort.DATE_DESC -> "Сначала новые"
     else -> name
 }
 
-// ───────────────────────────── Banners / states ─────────────────────────────
-
 @Composable
 private fun ImportingIndicator(modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Копирование аудио…", fontSize = 13.sp, color = TextSecondary)
-        LinearProgressIndicator(Modifier.fillMaxWidth(), color = Accent)
+        Text("Копирование аудио…", fontSize = 13.sp, color = StenoTheme.colors.textSecondary)
+        LinearProgressIndicator(Modifier.fillMaxWidth(), color = StenoTheme.colors.accent)
     }
 }
 
@@ -374,16 +376,16 @@ private fun ModelsBanner(preparation: ModelsPreparation, modifier: Modifier = Mo
                 modifier
                     .fillMaxWidth()
                     .clip(CardShape)
-                    .background(Color.White)
+                    .background(StenoTheme.colors.surface)
                     .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     "Подготовка моделей… ${(fraction * 100).roundToInt()}%",
                     fontSize = 14.sp,
-                    color = TextPrimary,
+                    color = StenoTheme.colors.text,
                 )
-                LinearProgressIndicator(progress = { fraction }, Modifier.fillMaxWidth(), color = Accent)
+                LinearProgressIndicator(progress = { fraction }, Modifier.fillMaxWidth(), color = StenoTheme.colors.accent)
             }
         }
         is ModelsPreparation.Failed -> {
@@ -392,7 +394,7 @@ private fun ModelsBanner(preparation: ModelsPreparation, modifier: Modifier = Mo
                 modifier = modifier
                     .fillMaxWidth()
                     .clip(CardShape)
-                    .background(Color.White)
+                    .background(StenoTheme.colors.surface)
                     .padding(12.dp),
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.error,
@@ -408,46 +410,106 @@ private fun EmptyState(isSearch: Boolean, modifier: Modifier = Modifier) {
         modifier = modifier.padding(32.dp),
         textAlign = TextAlign.Center,
         fontSize = 16.sp,
-        color = TextSecondary,
+        color = StenoTheme.colors.textSecondary,
     )
 }
 
-// ───────────────────────────── FAB ─────────────────────────────
+private val MiniFabOrigin = TransformOrigin(1f, 1f)
+
+private fun miniEnter(delay: Int) =
+    fadeIn(tween(150, delayMillis = delay)) +
+            scaleIn(tween(220, delayMillis = delay), initialScale = 0.6f, transformOrigin = MiniFabOrigin) +
+            slideInVertically(tween(220, delayMillis = delay)) { it / 2 }
+
+private fun miniExit() =
+    fadeOut(tween(100)) +
+            scaleOut(tween(120), targetScale = 0.6f, transformOrigin = MiniFabOrigin) +
+            slideOutVertically(tween(120)) { it / 2 }
 
 @Composable
 private fun MainFabs(
+    expanded: Boolean,
     hasActiveRecording: Boolean,
     isImporting: Boolean,
+    onToggle: () -> Unit,
     onRecordClick: () -> Unit,
     onImportClick: () -> Unit,
 ) {
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 45f else 0f,
+        animationSpec = tween(250),
+        label = "fabRotation",
+    )
+
     Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Не из макета: иначе в экране нет входа для ImportAudioClicked. Уберите, если вход будет в меню.
-        SmallFloatingActionButton(
-            onClick = { if (!isImporting) onImportClick() },
-            containerColor = Color.White,
-            contentColor = Accent,
-            shape = CircleShape,
-        ) {
-            Icon(Icons.Outlined.Place, contentDescription = "Импорт аудио")
+        AnimatedVisibility(visible = expanded, enter = miniEnter(delay = 50), exit = miniExit()) {
+            MiniFab(
+                label = "Импорт аудио",
+                icon = painterResource(R.drawable.ic_file_import),
+                enabled = !isImporting,
+                onClick = onImportClick,
+            )
+        }
+        AnimatedVisibility(visible = expanded, enter = miniEnter(delay = 0), exit = miniExit()) {
+            MiniFab(
+                label = if (hasActiveRecording) "Вернуться к записи" else "Новая заметка",
+                icon = painterResource(R.drawable.ic_file_plus),
+                enabled = true,
+                onClick = onRecordClick,
+            )
         }
         FloatingActionButton(
-            onClick = onRecordClick,
+            onClick = onToggle,
             modifier = Modifier.size(60.dp),
             shape = CircleShape,
-            containerColor = Accent,
-            contentColor = Color.White,
+            containerColor = StenoTheme.colors.accent,
+            contentColor = StenoTheme.colors.onAccent,
         ) {
             Icon(
-                imageVector = if (hasActiveRecording) Icons.Outlined.Place else Icons.Default.Add,
-                contentDescription = if (hasActiveRecording) "Вернуться к записи" else "Новая запись",
-                modifier = Modifier.size(28.dp),
+                painter = painterResource(R.drawable.ic_plus),
+                contentDescription = if (expanded) "Закрыть меню" else "Открыть меню",
+                modifier = Modifier.size(28.dp).rotate(rotation),
             )
         }
     }
 }
 
-// ───────────────────────────── Notes grid ─────────────────────────────
+@Composable
+private fun MiniFab(
+    label: String,
+    icon: Painter,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.padding(end = 10.dp).alpha(if (enabled) 1f else 0.5f),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Surface(
+            onClick = onClick,
+            enabled = enabled,
+            shape = RoundedCornerShape(8.dp),
+            color = StenoTheme.colors.surface,
+            shadowElevation = 2.dp,
+        ) {
+            Text(
+                text = label,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                fontSize = 14.sp,
+                color = StenoTheme.colors.text,
+            )
+        }
+        SmallFloatingActionButton(
+            onClick = { if (enabled) onClick() },
+            containerColor = StenoTheme.colors.surface,
+            contentColor = StenoTheme.colors.accent,
+            shape = CircleShape,
+        ) {
+            Icon(icon, contentDescription = label)
+        }
+    }
+}
 
 @Composable
 private fun NotesGrid(
@@ -457,13 +519,12 @@ private fun NotesGrid(
     onCancelClick: (Long) -> Unit,
     onDeleteClick: (Long) -> Unit,
 ) {
-    // Один и тот же грид: 1 колонка = список, 2 = сетка.
     val columns = if (layout == NotesLayout.GRID) 2 else 1
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 15.dp, end = 15.dp, bottom = 150.dp), // запас под FAB
+        contentPadding = PaddingValues(start = 15.dp, end = 15.dp, bottom = 150.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -491,7 +552,7 @@ private fun NoteCard(
     modifier: Modifier = Modifier,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
-    // Нет данных о полях TranscriptionProgress, поэтому «идёт обработка» = progress != null.
+
     val isProcessing = note.progress != null
 
     Box(modifier) {
@@ -499,7 +560,7 @@ private fun NoteCard(
             Modifier
                 .fillMaxWidth()
                 .clip(CardShape)
-                .background(Color.White)
+                .background(StenoTheme.colors.surface)
                 .combinedClickable(onClick = onClick, onLongClick = { menuOpen = true })
                 .padding(horizontal = 15.dp, vertical = 12.dp),
         ) {
@@ -509,16 +570,9 @@ private fun NoteCard(
                     modifier = Modifier.weight(1f),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
-                    color = TextPrimary,
+                    color = StenoTheme.colors.text,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                )
-                // TODO: нужны isFavorite в NoteItem и интент переключения — пока декоративная звезда
-                Icon(
-                    Icons.Outlined.Place,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = TextSecondary,
                 )
             }
 
@@ -528,15 +582,15 @@ private fun NoteCard(
                 text = note.preview.ifBlank { if (isProcessing) "Идёт обработка…" else "" },
                 fontSize = 14.sp,
                 lineHeight = 18.sp,
-                color = TextPrimary,
-                minLines = 6, // одинаковая высота карточек, как в макете
+                color = StenoTheme.colors.text,
+                minLines = 6,
                 maxLines = 6,
                 overflow = TextOverflow.Ellipsis,
             )
 
             if (isProcessing) {
                 Spacer(Modifier.height(8.dp))
-                LinearProgressIndicator(Modifier.fillMaxWidth(), color = Accent)
+                LinearProgressIndicator(Modifier.fillMaxWidth(), color = StenoTheme.colors.accent)
             }
 
             Spacer(Modifier.height(8.dp))
@@ -550,9 +604,9 @@ private fun NoteCard(
                 },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                note.speakerCount?.let { MetaItem(Icons.Outlined.Place, it.toString()) }
-                MetaItem(Icons.Outlined.Place, formatDuration(note.durationMs))
-                MetaItem(Icons.Outlined.Place, remember(note.createdAt) { formatDate(note.createdAt) })
+                note.speakerCount?.let { MetaItem(painterResource(R.drawable.ic_users), it.toString()) }
+                MetaItem(painterResource(R.drawable.ic_clock), formatDuration(note.durationMs))
+                MetaItem(painterResource(R.drawable.ic_calendar), remember(note.createdAt) { formatDate(note.createdAt) })
             }
         }
 
@@ -567,7 +621,7 @@ private fun NoteCard(
                 )
             }
             DropdownMenuItem(
-                text = { Text("Удалить", color = MaterialTheme.colorScheme.error) },
+                text = { Text("Удалить", color = StenoTheme.colors.error) },
                 onClick = {
                     menuOpen = false
                     onDeleteClick()
@@ -578,16 +632,14 @@ private fun NoteCard(
 }
 
 @Composable
-private fun MetaItem(icon: ImageVector, text: String) {
+private fun MetaItem(icon: Painter, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = TextSecondary)
-        Text(text, fontSize = 14.sp, color = TextSecondary, maxLines = 1)
+        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = StenoTheme.colors.textSecondary)
+        Text(text, fontSize = 14.sp, color = StenoTheme.colors.textSecondary, maxLines = 1)
     }
 }
 
-// ───────────────────────────── Formatting ─────────────────────────────
-
-private val DateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yy")
+private val DateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM")
 
 private fun formatDate(epochMs: Long): String =
     Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).format(DateFormatter)
@@ -600,8 +652,6 @@ private fun formatDuration(ms: Long): String {
     return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
 }
 
-// ───────────────────────────── Preview ─────────────────────────────
-
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
 private fun MainScreenGridPreview() {
@@ -611,7 +661,7 @@ private fun MainScreenGridPreview() {
             title = "Note name ${it + 1}",
             createdAt = 1_762_300_000_000,
             durationMs = 125_000,
-            status = ProcessingStatus.entries.first(), // если это не enum — подставьте своё значение
+            status = ProcessingStatus.entries.first(),
             progress = null,
             speakerCount = 1,
             preview = "Первая строка расшифровки, достаточно длинная, чтобы не поместиться. " +
@@ -624,4 +674,3 @@ private fun MainScreenGridPreview() {
         onIntent = {},
     )
 }
-
