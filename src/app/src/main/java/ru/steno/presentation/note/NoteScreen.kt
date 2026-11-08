@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -519,7 +520,7 @@ private fun PlayerSlider(
     val value = (dragValue ?: positionMs.toFloat()).coerceIn(0f, max)
 
     Slider(
-        value = value,
+        value = dragValue ?: value,
         onValueChange = {
             dragValue = it
             onDrag(it.toLong())
@@ -536,6 +537,7 @@ private fun PlayerSlider(
             Box(
                 Modifier
                     .size(12.dp)
+                    .offset(y = 2.dp)
                     .clip(CircleShape)
                     .background(StenoTheme.colors.accent),
             )
