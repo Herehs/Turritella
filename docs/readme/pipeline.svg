@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="990" viewBox="0 0 1300 990" role="img" aria-labelledby="title desc">
+<title id="title">Локальный конвейер Turritella</title>
+<desc id="desc">Аудио приводится к моно 16 кГц. Интервалы VAD и диаризации согласуются, затем выполняются ASR, пунктуация Qwen и сохранение результата. Все вычисления выполняются на Android-устройстве.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7998D8"/></marker></defs>
+<rect x="1" y="1" width="1298" height="988" rx="28" fill="#FFFFFF" stroke="#E0E6F0" stroke-width="2"/>
+<g font-family="DejaVu Sans,Arial,sans-serif">
+<text x="64" y="63" fill="#131A26" font-size="30" font-weight="700">Локальный конвейер</text>
+<text x="64" y="97" fill="#6F7E94" font-size="18">Android · единая временная шкала · без удалённого инференса</text>
+<rect x="430" y="143" width="440" height="108" rx="18" fill="#EDF3FF" stroke="#2F6BFF" stroke-width="1.5"/>
+<text x="452" y="170" font-size="13" font-weight="700" letter-spacing="1.3" fill="#2F6BFF">ВХОД И ПОДГОТОВКА</text>
+<text x="452" y="203" font-size="23" font-weight="700" fill="#131A26">Аудио → моно 16 кГц</text>
+<text x="452" y="230" font-size="16" fill="#6F7E94">Импорт файла или запись микрофоном</text>
+<path d="M 650 251 L 650 284 L 335 284 L 335 319" fill="none" stroke="#7998D8" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 650 251 L 650 284 L 965 284 L 965 319" fill="none" stroke="#7998D8" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="100" y="320" width="470" height="108" rx="18" fill="#F8FAFD" stroke="#D6DFEC" stroke-width="1.5"/>
+<text x="122" y="347" font-size="13" font-weight="700" letter-spacing="1.3" fill="#2F6BFF">ГДЕ ЕСТЬ РЕЧЬ</text>
+<text x="122" y="380" font-size="23" font-weight="700" fill="#131A26">Silero VAD</text>
+<text x="122" y="407" font-size="16" fill="#6F7E94">Речевые интервалы</text>
+<rect x="730" y="320" width="470" height="108" rx="18" fill="#F8FAFD" stroke="#D6DFEC" stroke-width="1.5"/>
+<text x="752" y="347" font-size="13" font-weight="700" letter-spacing="1.3" fill="#2F6BFF">КТО ГОВОРИТ</text>
+<text x="752" y="380" font-size="23" font-weight="700" fill="#131A26">Диаризация</text>
+<text x="752" y="407" font-size="16" fill="#6F7E94">Pyannote · 3D-Speaker · кластеризация</text>
+<path d="M 335 428 L 335 472 L 650 472 L 650 509" fill="none" stroke="#7998D8" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 965 428 L 965 472 L 650 472 L 650 509" fill="none" stroke="#7998D8" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="410" y="510" width="480" height="108" rx="18" fill="#EDF3FF" stroke="#2F6BFF" stroke-width="1.5"/>
+<text x="432" y="537" font-size="13" font-weight="700" letter-spacing="1.3" fill="#2F6BFF">СОГЛАСОВАНИЕ</text>
+<text x="432" y="570" font-size="23" font-weight="700" fill="#131A26">Интервалы для ASR</text>
+<text x="432" y="597" font-size="16" fill="#6F7E94">Пересечение речи и голосов, границы</text>
+<path d="M 650 618 L 650 652 L 240 652 L 240 689" fill="none" stroke="#7998D8" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="64" y="690" width="352" height="108" rx="18" fill="#F8FAFD" stroke="#D6DFEC" stroke-width="1.5"/>
+<text x="86" y="717" font-size="13" font-weight="700" letter-spacing="1.3" fill="#2F6BFF">СЛОВА</text>
+<text x="86" y="750" font-size="23" font-weight="700" fill="#131A26">GigaAM / Whisper</text>
+<text x="86" y="777" font-size="16" fill="#6F7E94">Распознавание фрагментов</text>
+<path d="M 416 744 L 473 744" fill="none" stroke="#7998D8" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="474" y="690" width="352" height="108" rx="18" fill="#F8FAFD" stroke="#D6DFEC" stroke-width="1.5"/>
+<text x="496" y="717" font-size="13" font-weight="700" letter-spacing="1.3" fill="#2F6BFF">ПУНКТУАЦИЯ</text>
+<text x="496" y="750" font-size="23" font-weight="700" fill="#131A26">Qwen + проверка слов</text>
+<text x="496" y="777" font-size="16" fill="#6F7E94">Опциональный этап</text>
+<path d="M 826 744 L 883 744" fill="none" stroke="#7998D8" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="884" y="690" width="352" height="108" rx="18" fill="#F8FAFD" stroke="#D6DFEC" stroke-width="1.5"/>
+<text x="906" y="717" font-size="13" font-weight="700" letter-spacing="1.3" fill="#2F6BFF">РЕЗУЛЬТАТ</text>
+<text x="906" y="750" font-size="23" font-weight="700" fill="#131A26">Room</text>
+<text x="906" y="777" font-size="16" fill="#6F7E94">Реплики, участники, время</text>
+<path d="M 1060 798 L 1060 846" fill="none" stroke="#7998D8" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="824" y="847" width="412" height="108" rx="18" fill="#EDF3FF" stroke="#2F6BFF" stroke-width="1.5"/>
+<text x="846" y="874" font-size="13" font-weight="700" letter-spacing="1.3" fill="#2F6BFF">РАБОТА С РЕЗУЛЬТАТОМ</text>
+<text x="846" y="907" font-size="23" font-weight="700" fill="#131A26">Плеер и экспорт</text>
+<text x="846" y="934" font-size="16" fill="#6F7E94">Просмотр · JSON · Markdown</text>
+<text x="64" y="896" fill="#6F7E94" font-size="16">Схема зависимостей данных.</text>
+<text x="64" y="924" fill="#6F7E94" font-size="16">Вычислительные этапы выполняются последовательно.</text>
+</g></svg>
