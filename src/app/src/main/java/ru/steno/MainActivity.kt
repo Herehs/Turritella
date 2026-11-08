@@ -3,17 +3,9 @@ package ru.steno
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entry
@@ -27,6 +19,7 @@ import ru.steno.presentation.navigation.MainRoute
 import ru.steno.presentation.navigation.NoteRoute
 import ru.steno.presentation.navigation.RecordingRoute
 import ru.steno.presentation.StenoTheme
+import ru.steno.presentation.TerritullaTheme
 import ru.steno.presentation.note.NoteScreenRoute
 import ru.steno.presentation.recording.RecordingScreenRoute
 
@@ -41,8 +34,12 @@ class MainActivity : ComponentActivity() {
 private fun App() {
     val appViewModel: AppViewModel = koinViewModel()
     val state by appViewModel.state.collectAsStateWithLifecycle()
-    StenoTheme(state.themeMode) {
-        NavHost()
+    TerritullaTheme(state.themeMode) {
+        Surface(
+            color = StenoTheme.colors.bg
+        ) {
+            NavHost()
+        }
     }
 }
 

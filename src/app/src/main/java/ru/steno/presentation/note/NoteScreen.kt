@@ -38,9 +38,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,7 +65,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -87,6 +83,7 @@ import org.koin.core.parameter.parametersOf
 import ru.steno.R
 import ru.steno.domain.*
 import ru.steno.presentation.StenoTheme
+import ru.steno.presentation.TerritullaTheme
 
 @Composable
 fun NoteScreenRoute(
@@ -644,19 +641,19 @@ private fun previewState(expanded: Boolean = false) = NoteState(
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
-private fun NoteCollapsedPreview() = StenoTheme(ThemeMode.LIGHT) {
+private fun NoteCollapsedPreview() = TerritullaTheme(ThemeMode.LIGHT) {
     NoteScreen(previewState(), remember { SnackbarHostState() }, onIntent = {}, onBack = {})
 }
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
-private fun NoteDarkPreview() = StenoTheme(ThemeMode.DARK) {
+private fun NoteDarkPreview() = TerritullaTheme(ThemeMode.DARK) {
     NoteScreen(previewState(expanded = true), remember { SnackbarHostState() }, onIntent = {}, onBack = {})
 }
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
-private fun NoteProcessingPreview() = StenoTheme(ThemeMode.LIGHT) {
+private fun NoteProcessingPreview() = TerritullaTheme(ThemeMode.LIGHT) {
     NoteScreen(
         NoteState(title = "Новая запись", status = ProcessingStatus.PROCESSING),
         remember { SnackbarHostState() }, onIntent = {}, onBack = {},

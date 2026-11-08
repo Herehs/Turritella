@@ -176,7 +176,7 @@ private fun StenoColors.toMaterial(): ColorScheme {
 /* ───────────── Тема ───────────── */
 
 @Composable
-fun StenoTheme(
+fun TerritullaTheme(
     mode: ThemeMode,
     content: @Composable () -> Unit,
 ) {

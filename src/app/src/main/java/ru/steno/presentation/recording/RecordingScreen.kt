@@ -76,6 +76,7 @@ import org.koin.androidx.compose.koinViewModel
 import ru.steno.data.audio.RecorderStatus
 import ru.steno.domain.ThemeMode
 import ru.steno.presentation.StenoTheme
+import ru.steno.presentation.TerritullaTheme
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -444,7 +445,7 @@ private val PreviewAmplitudes = List(40) { i -> (0.1f + 0.9f * kotlin.math.abs(k
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
-private fun RecordingIdlePreview() = StenoTheme(ThemeMode.LIGHT) {
+private fun RecordingIdlePreview() = TerritullaTheme(ThemeMode.LIGHT) {
     RecordingScreen(
         state = RecordingState(title = "Новая запись", date = 1_762_400_000_000),
         snackbarHostState = remember { SnackbarHostState() },
@@ -454,7 +455,7 @@ private fun RecordingIdlePreview() = StenoTheme(ThemeMode.LIGHT) {
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
-private fun RecordingActivePreview() = StenoTheme(ThemeMode.LIGHT) {
+private fun RecordingActivePreview() = TerritullaTheme(ThemeMode.LIGHT) {
     RecordingScreen(
         state = RecordingState(
             title = "Новая запись",
@@ -470,7 +471,7 @@ private fun RecordingActivePreview() = StenoTheme(ThemeMode.LIGHT) {
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
-private fun RecordingPausedDarkPreview() = StenoTheme(ThemeMode.DARK) {
+private fun RecordingPausedDarkPreview() = TerritullaTheme(ThemeMode.DARK) {
     RecordingScreen(
         state = RecordingState(
             title = "Новая запись",
