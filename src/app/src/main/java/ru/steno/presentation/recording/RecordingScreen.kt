@@ -38,7 +38,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -57,10 +56,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -71,17 +71,19 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
-import ru.steno.data.audio.RecorderStatus
-import ru.steno.domain.ThemeMode
-import ru.steno.presentation.StenoTheme
-import ru.steno.presentation.TerritullaTheme
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.max
+import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import ru.steno.data.audio.RecorderStatus
+import ru.steno.domain.ThemeMode
+import ru.steno.presentation.StenoSnackbarHost
+import ru.steno.presentation.StenoTheme
+import ru.steno.presentation.TerritullaTheme
+import ru.steno.presentation.stringRes
 
 @Composable
 fun RecordingScreenRoute(
@@ -91,6 +93,7 @@ fun RecordingScreenRoute(
     viewModel: RecordingViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val resources by rememberUpdatedState(LocalResources.current)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -110,7 +113,7 @@ fun RecordingScreenRoute(
                 is RecordingEffect.OpenNote -> currentOnOpenNote(effect.id)
                 RecordingEffect.NavigateBack -> currentOnBack()
                 is RecordingEffect.ShowMessage -> scope.launch {
-                    snackbarHostState.showSnackbar(effect.message.toString())
+                    snackbarHostState.showSnackbar(resources.getString(effect.message.stringRes))
                 }
             }
         }
@@ -138,7 +141,7 @@ fun RecordingScreen(
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { StenoSnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             Modifier

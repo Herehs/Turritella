@@ -72,6 +72,35 @@ class ScreenTest {
         assertEquals(RecordingEffect.NavigateBack,vm.effects.first())
     }
 
+    @Test fun repeatedStopDoesNotSaveTwice() = runTest(dispatcher) {
+        every { app.getString(any(),*anyVararg()) } returns "Запись"
+        every { app.scope } returns this
+        every { app.recorder.state } returns MutableStateFlow(Capture(ru.steno.data.audio.RecorderStatus.RECORDING))
+        coEvery { app.recorder.stop(any(), false) } coAnswers { kotlinx.coroutines.delay(100); null }
+        val vm = RecordingViewModel(app)
+        runCurrent()
+        vm.onIntent(RecordingIntent.StopClicked)
+        vm.onIntent(RecordingIntent.StopClicked)
+        runCurrent()
+        val recorder = app.recorder
+        coVerify(exactly=1) { recorder.stop(any(), false) }
+        advanceTimeBy(101)
+        runCurrent()
+        assertEquals(RecordingEffect.ShowMessage(UiMessage.RecordingTooShort), vm.effects.first())
+    }
+
+    @Test fun finishedAudioCanBePlayedAgain() = runTest(dispatcher) {
+        val player = mockk<ExoPlayer>(relaxed=true)
+        every { player.playbackState } returns androidx.media3.common.Player.STATE_ENDED
+        every { app.notes.observe(1L) } returns flowOf(null)
+        every { app.notes.turns(1L) } returns flowOf(emptyList())
+        val vm = NoteViewModel(app,1,player)
+        runCurrent()
+        assertTrue(vm.state.value.player.isReady)
+        vm.onIntent(NoteIntent.PlayPauseClicked)
+        verify { player.seekTo(0L); player.play() }
+    }
+
     @Test fun noteSeekAndExportGuard() = runTest(dispatcher) {
         val player = mockk<ExoPlayer>(relaxed=true)
         every { app.notes.observe(1L) } returns flowOf(null)

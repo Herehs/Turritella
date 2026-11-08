@@ -14,8 +14,8 @@ android {
         applicationId = "ru.steno"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = providers.environmentVariable("RELEASE_VERSION_CODE").orNull?.toInt() ?: 1
+        versionName = providers.environmentVariable("RELEASE_VERSION_NAME").orNull ?: "0.1"
         ndk { abiFilters += "arm64-v8a" }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -26,15 +26,26 @@ android {
     }
     packaging { resources.excludes += "META-INF/DEPENDENCIES" }
     testOptions.unitTests.all { it.useJUnitPlatform() }
+    val releaseKey = providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull
+    if (releaseKey != null) {
+        signingConfigs.create("release") {
+            storeFile = file(releaseKey)
+            storePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").get()
+            keyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").get()
+            keyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").get()
+        }
+    }
     buildTypes {
         release {
-            // Release можно установить локально: подпись отладочным ключом.
-            signingConfig = signingConfigs.getByName("debug")
+            // Без ключа локальная release-сборка остаётся неподписанной.
+            if (releaseKey != null) signingConfig = signingConfigs.getByName("release")
         }
     }
 }
 
 dependencies {
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.navigation3.runtime)
     implementation(libs.navigation3.ui)
     implementation(libs.androidx.activity.compose)

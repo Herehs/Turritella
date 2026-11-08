@@ -22,6 +22,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -89,6 +90,22 @@ fun Settings(
                     }
                 },
             )
+
+            when (val whisper = state.whisper) {
+                is WhisperModelState.Failed -> {
+                    Text("Не удалось скачать Whisper", color = StenoTheme.colors.bg)
+                    TextButton(onClick = { onIntent(SettingsIntent.DownloadWhisperClicked) }) { Text("Повторить загрузку", color = StenoTheme.colors.accent) }
+                }
+                is WhisperModelState.Downloading, WhisperModelState.WaitingForNetwork, WhisperModelState.Verifying -> {
+                    Text(when (whisper) {
+                        is WhisperModelState.Downloading -> "Whisper: ${whisper.downloadedBytes * 100 / whisper.totalBytes.coerceAtLeast(1)}%"
+                        WhisperModelState.Verifying -> "Проверка модели Whisper"
+                        else -> "Ожидание сети"
+                    }, color = StenoTheme.colors.bg)
+                    TextButton(onClick = { onIntent(SettingsIntent.CancelWhisperDownloadClicked) }) { Text("Отменить загрузку", color = StenoTheme.colors.accent) }
+                }
+                else -> Unit
+            }
 
             Spacer(Modifier.height(30.dp))
 

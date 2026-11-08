@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -23,6 +24,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
+import ru.steno.presentation.StenoTheme
 
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
@@ -33,6 +35,7 @@ fun ZoomDrawer(
     menuContent: @Composable () -> Unit,
     mainContent: @Composable () -> Unit
 ) {
+    val currentClose by rememberUpdatedState(onCloseMenu)
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current.density
 
@@ -60,7 +63,7 @@ fun ZoomDrawer(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1E1E1E)) // Цвет фона под меню
+            .background(StenoTheme.colors.bg) // Цвет фона под меню
     ) {
         // Контент меню (задний план)
         Box(modifier = Modifier.fillMaxSize()) {
@@ -77,12 +80,12 @@ fun ZoomDrawer(
                     rotationZ = 0f
                 }
                 .clip(RoundedCornerShape(cornerRadius))
-                .pointerInput(gesturesEnabled) {
+                .pointerInput(gesturesEnabled, isMenuOpen) {
                     if (gesturesEnabled) {
                         detectHorizontalDragGestures(
                             onHorizontalDrag = { _, dragAmount ->
                                 if (isMenuOpen && dragAmount < -10) {
-                                    onCloseMenu()
+                                    currentClose()
                                 }
                             }
                         )
@@ -92,9 +95,11 @@ fun ZoomDrawer(
                     onCloseMenu()
                 }
                 .fillMaxSize()
-                .background(Color.White)
+                .background(StenoTheme.colors.bg)
         ) {
             mainContent()
+            // Перехватываем нажатия над сдвинутым экраном: первое нажатие закрывает меню.
+            if (isMenuOpen) Box(Modifier.fillMaxSize().clickable { currentClose() })
         }
     }
 }

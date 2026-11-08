@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="message_unsupported_format">В файле нет поддерживаемой аудиодорожки</string>
+    <string name="message_file_unreadable">Не удалось прочитать файл</string>
+    <string name="message_not_enough_storage">Недостаточно места на устройстве</string>
+    <string name="message_export_done">Расшифровка сохранена</string>
+    <string name="message_export_failed">Не удалось сохранить расшифровку</string>
+    <string name="message_transcript_not_ready">Дождитесь завершения расшифровки</string>
+    <string name="message_mic_permission_denied">Для записи разрешите доступ к микрофону</string>
+    <string name="message_recording_failed">Не удалось записать звук</string>
+    <string name="message_recording_too_short">Запись слишком короткая</string>
+    <string name="message_whisper_not_installed">Сначала скачайте модель Whisper</string>
+    <string name="message_whisper_installed">Модель Whisper установлена</string>
+    <string name="message_whisper_download_failed">Не удалось скачать модель Whisper. Повторите попытку</string>
+    <string name="message_model_in_use">Модель сейчас используется. Дождитесь завершения обработки</string>
+</resources>

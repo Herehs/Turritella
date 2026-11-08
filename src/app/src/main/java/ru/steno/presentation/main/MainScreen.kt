@@ -45,7 +45,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -67,6 +66,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -76,17 +76,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
-import ru.steno.R
-import ru.steno.domain.*
-import ru.steno.presentation.settings.SettingsViewModel
-import ru.steno.presentation.StenoTheme
-import ru.steno.presentation.settings.Settings
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import ru.steno.R
+import ru.steno.domain.*
+import ru.steno.presentation.StenoSnackbarHost
+import ru.steno.presentation.StenoTheme
+import ru.steno.presentation.settings.Settings
+import ru.steno.presentation.settings.SettingsEffect
+import ru.steno.presentation.settings.SettingsViewModel
+import ru.steno.presentation.stringRes
 
 private val CardShape = RoundedCornerShape(10.dp)
 
@@ -100,6 +103,7 @@ fun MainScreenRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
+    val resources by rememberUpdatedState(LocalResources.current)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -122,11 +126,23 @@ fun MainScreenRoute(
                 MainEffect.OpenRecording -> currentOnOpenRecording()
                 is MainEffect.PickAudio -> audioPicker.launch(effect.mimeTypes.toTypedArray())
                 is MainEffect.ShowMessage -> scope.launch {
-                    snackbarHostState.showSnackbar(effect.message.toString())
+                    snackbarHostState.showSnackbar(resources.getString(effect.message.stringRes))
                 }
             }
         }
     }
+
+    LaunchedEffect(settingsViewModel) {
+        settingsViewModel.effects.collect { effect ->
+            when (effect) {
+                is SettingsEffect.ShowMessage -> {
+                    settingsOpen = false
+                    scope.launch { snackbarHostState.showSnackbar(resources.getString(effect.message.stringRes)) }
+                }
+            }
+        }
+    }
+    BackHandler(enabled = settingsOpen) { settingsOpen = false }
 
     ZoomDrawer(
         isMenuOpen = settingsOpen,
@@ -165,7 +181,7 @@ fun MainScreen(
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { StenoSnackbarHost(snackbarHostState) },
         floatingActionButton = {
             MainFabs(
                 expanded = fabExpanded,

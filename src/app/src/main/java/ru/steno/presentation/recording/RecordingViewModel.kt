@@ -11,6 +11,7 @@ import ru.steno.presentation.common.format.formatDate
 import java.util.Locale
 
 class RecordingViewModel(private val app: StenoApp) : ScreenModel<RecordingState,RecordingIntent,RecordingEffect>(RecordingState()) {
+    private var saveJob: Job? = null
     private val now = System.currentTimeMillis()
     private val defaultTitle = app.getString(R.string.recording_title,formatDate(now,Locale.getDefault()))
     init {
@@ -23,9 +24,11 @@ class RecordingViewModel(private val app: StenoApp) : ScreenModel<RecordingState
         try { app.recorder.start() } catch(e: Exception) { emit(RecordingEffect.ShowMessage(UiMessage.RecordingFailed)) }
     }
     private fun stop(discard: Boolean) {
+        if (saveJob?.isActive == true) return
         if (app.recorder.state.value.status !in listOf(RecorderStatus.PAUSED,RecorderStatus.RECORDING)) return
         reduce { it.copy(showExitDialog=false) }
-        viewModelScope.launch {
+        // Сохранение должно завершиться и при удалении экрана из back stack.
+        saveJob = app.scope.launch {
             try {
                 val audio = app.recorder.stop(state.value.title.ifBlank { defaultTitle },discard)
                 if (discard) emit(RecordingEffect.NavigateBack)
@@ -48,7 +51,11 @@ class RecordingViewModel(private val app: StenoApp) : ScreenModel<RecordingState
             RecordingIntent.StopClicked,RecordingIntent.ExitSaveClicked -> stop(false)
             RecordingIntent.ExitDiscardClicked -> stop(true)
             RecordingIntent.ExitDialogDismissed -> reduce { it.copy(showExitDialog=false) }
-            RecordingIntent.BackClicked -> if (state.value.status == RecorderStatus.IDLE) emit(RecordingEffect.NavigateBack) else reduce { it.copy(showExitDialog=true) }
+            RecordingIntent.BackClicked -> when {
+                saveJob?.isActive == true || state.value.status == RecorderStatus.SAVING -> Unit
+                state.value.status == RecorderStatus.IDLE -> emit(RecordingEffect.NavigateBack)
+                else -> reduce { it.copy(showExitDialog=true) }
+            }
         }
     }
 }

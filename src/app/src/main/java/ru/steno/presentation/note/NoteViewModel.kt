@@ -49,7 +49,7 @@ class NoteViewModel(private val app: StenoApp, private val id: Long,
     }
     private fun updatePlayer() {
         val pos = engine.currentPosition.coerceAtLeast(0)
-        reduce { it.copy(player=it.player.copy(isReady=engine.playbackState == Player.STATE_READY,isPlaying=engine.isPlaying,positionMs=pos),
+        reduce { it.copy(player=it.player.copy(isReady=engine.playbackState in setOf(Player.STATE_READY, Player.STATE_ENDED),isPlaying=engine.isPlaying,positionMs=pos),
             activeUtteranceIndex=activeUtterance(rows,pos)) }
     }
     private fun export(uri: String?) {

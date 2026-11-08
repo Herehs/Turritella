@@ -1,5 +1,7 @@
 package ru.steno.presentation.note
 
+import android.app.Activity
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -47,9 +49,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -66,6 +67,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -82,8 +84,10 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ru.steno.R
 import ru.steno.domain.*
+import ru.steno.presentation.StenoSnackbarHost
 import ru.steno.presentation.StenoTheme
 import ru.steno.presentation.TerritullaTheme
+import ru.steno.presentation.stringRes
 
 @Composable
 fun NoteScreenRoute(
@@ -93,23 +97,28 @@ fun NoteScreenRoute(
     viewModel: NoteViewModel = koinViewModel(key = "note-$noteId", parameters = { parametersOf(noteId) }),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val resources by rememberUpdatedState(LocalResources.current)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val currentOnBack by rememberUpdatedState(onBack)
 
     val exportPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("*/*"),
-    ) { uri ->
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val uri = result.data?.data?.takeIf { result.resultCode == Activity.RESULT_OK }
         viewModel.onIntent(NoteIntent.ExportDestinationPicked(uri?.toString()))
     }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is NoteEffect.PickExportDestination -> exportPicker.launch(effect.suggestedName)
+                is NoteEffect.PickExportDestination -> exportPicker.launch(
+                    Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                        .setType(effect.mimeType).putExtra(Intent.EXTRA_TITLE, effect.suggestedName)
+                )
                 NoteEffect.NavigateBack -> currentOnBack()
                 is NoteEffect.ShowMessage -> scope.launch {
-                    snackbarHostState.showSnackbar(effect.message.toString())
+                    snackbarHostState.showSnackbar(resources.getString(effect.message.stringRes))
                 }
             }
         }
@@ -138,7 +147,7 @@ fun NoteScreen(
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { StenoSnackbarHost(snackbarHostState) },
     ) { padding ->
         Box(
             Modifier
@@ -155,7 +164,7 @@ fun NoteScreen(
 
                 Box(Modifier.weight(1f).fillMaxWidth()) {
                     when {
-                        state.utterances.isNotEmpty() -> TranscriptList(
+                        state.utterances.isNotEmpty() && state.status == ProcessingStatus.DONE -> TranscriptList(
                             utterances = state.utterances,
                             activeIndex = state.activeUtteranceIndex,
                             onUtteranceClick = { onIntent(NoteIntent.UtteranceClicked(it)) },
@@ -163,7 +172,8 @@ fun NoteScreen(
                         )
                         else -> StatusBlock(
                             status = state.status,
-                            hasError = state.error != null,
+                            error = state.error,
+                            progress = state.progress,
                             onCancel = { onIntent(NoteIntent.CancelProcessingClicked) },
                             onRetry = { onIntent(NoteIntent.RetryProcessingClicked) },
                             modifier = Modifier.align(Alignment.Center),
@@ -370,7 +380,8 @@ private fun UtteranceRow(
 @Composable
 private fun StatusBlock(
     status: ProcessingStatus,
-    hasError: Boolean,
+    error: ProcessingError?,
+    progress: TranscriptionProgress?,
     onCancel: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -381,9 +392,16 @@ private fun StatusBlock(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         when {
-            hasError -> {
+            error != null || status == ProcessingStatus.FAILED -> {
                 Text(
-                    "Не удалось расшифровать запись",
+                    when (error) {
+                        ProcessingError.NO_SPEECH -> "Речь в записи не найдена"
+                        ProcessingError.MODEL_UNAVAILABLE -> "Модель недоступна"
+                        ProcessingError.OUT_OF_MEMORY -> "Недостаточно оперативной памяти"
+                        ProcessingError.NOT_ENOUGH_STORAGE -> "Недостаточно места на устройстве"
+                        ProcessingError.UNSUPPORTED_FORMAT -> "Формат аудио не поддерживается"
+                        else -> "Не удалось расшифровать запись"
+                    },
                     fontSize = 16.sp,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.error,
@@ -397,8 +415,18 @@ private fun StatusBlock(
                     color = StenoTheme.colors.textSecondary,
                 )
 
-                LinearProgressIndicator(Modifier.width(200.dp), color = StenoTheme.colors.accent)
+                if (progress == null) {
+                    LinearProgressIndicator(Modifier.width(200.dp), color = StenoTheme.colors.accent)
+                } else {
+                    val stages = androidx.compose.ui.res.stringArrayResource(R.array.stages)
+                    Text("${stages[progress.stage.ordinal]} · ${(progress.fraction * 100).toInt()}%", color = StenoTheme.colors.textSecondary)
+                    LinearProgressIndicator(progress = { progress.fraction }, modifier = Modifier.width(200.dp), color = StenoTheme.colors.accent)
+                }
                 TextButton(onClick = onCancel) { Text("Отменить", color = StenoTheme.colors.accent) }
+            }
+            status == ProcessingStatus.CANCELLED -> {
+                Text("Обработка отменена", color = StenoTheme.colors.textSecondary)
+                TextButton(onClick = onRetry) { Text("Повторить", color = StenoTheme.colors.accent) }
             }
             else -> Text(
                 "Речь в записи не найдена",
