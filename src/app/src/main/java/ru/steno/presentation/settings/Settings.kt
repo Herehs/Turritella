@@ -1,4 +1,4 @@
-package ru.steno.presentation.main
+package ru.steno.presentation.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -42,29 +43,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.steno.R
 import ru.steno.domain.AsrModelType
+import ru.steno.domain.ExportFormat
 import ru.steno.domain.ThemeMode
 import ru.steno.domain.WhisperModelState
-import ru.steno.presentation.settings.SettingsIntent
-import ru.steno.presentation.settings.SettingsState
-
-// Цвета из макета. Фон панели в SVG не задан: белый текст и светлый логотип подразумевают тёмный фон.
-private val DrawerBackground = Color(0xFF131A26)
-private val OnDrawer = Color.White
-private val PillBackground = Color(0xFFE9ECEF)
-private val PillText = Color(0xFF131A26)
-private val Accent = Color(0xFF2F6BFF)
+import ru.steno.presentation.StenoTheme
 
 private val OptionShape = RoundedCornerShape(10.dp)
 
 @Composable
-fun DrawerContent(
+fun Settings(
     state: SettingsState = SettingsState(),
     onIntent: (SettingsIntent) -> Unit
 ){
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xff131A26))
+            .background(StenoTheme.colors.text)
     ){
         Column(
             Modifier
@@ -79,19 +73,17 @@ fun DrawerContent(
 
             DrawerOptionGroup(
                 title = "Выберите модель:",
-                icon = Icons.Outlined.Place,
+                icon = painterResource(R.drawable.ic_brain),
                 options = listOf(AsrModelType.WHISPER, AsrModelType.GIGA_AM),
                 selected = state.asrModel,
                 label = { it.label() },
                 onSelect = { onIntent(SettingsIntent.AsrModelSelected(it)) },
                 optionTrailing = { type ->
-                    // Остальные состояния WhisperModelState (загрузка, установлена) в макете не нарисованы.
-                    // TODO: Downloading -> CancelWhisperDownloadClicked, Installed -> DeleteWhisperClicked
                     if (type == AsrModelType.WHISPER && state.whisper is WhisperModelState.NotInstalled) {
                         Text(
                             text = "Скачать",
                             fontSize = 13.sp,
-                            color = Accent,
+                            color = StenoTheme.colors.accent,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
                                 .clickable { onIntent(SettingsIntent.DownloadWhisperClicked) }
@@ -105,11 +97,22 @@ fun DrawerContent(
 
             DrawerOptionGroup(
                 title = "Тема:",
-                icon = Icons.Outlined.Place,
+                icon = painterResource(R.drawable.ic_palette),
                 options = listOf(ThemeMode.LIGHT, ThemeMode.DARK, ThemeMode.SYSTEM),
                 selected = state.themeMode,
                 label = { it.label() },
                 onSelect = { onIntent(SettingsIntent.ThemeSelected(it)) },
+            )
+
+            Spacer(Modifier.height(30.dp))
+
+            DrawerOptionGroup(
+                title = "Формат экспорта:",
+                icon = painterResource(R.drawable.ic_file_export),
+                options = listOf(ExportFormat.JSON, ExportFormat.MARKDOWN),
+                selected = state.exportFormat,
+                label = { it.name },
+                onSelect = { onIntent(SettingsIntent.ExportFormatSelected(it)) },
             )
         }
     }
@@ -127,9 +130,6 @@ private fun ThemeMode.label(): String = when (this) {
     ThemeMode.SYSTEM -> "Системная"
 }
 
-// ───────────────────────────── Components ─────────────────────────────
-
-/** Логотип + название. Логотип: res/drawable/ic_logo.xml (векторный, цвет зашит в него). */
 @Composable
 fun DrawerHeader(modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.Top) {
@@ -137,29 +137,28 @@ fun DrawerHeader(modifier: Modifier = Modifier) {
             painter = painterResource(R.drawable.ic_logo),
             contentDescription = null,
             modifier = Modifier.size(width = 47.dp, height = 60.dp),
-            tint = Color.Unspecified,
+            tint = StenoTheme.colors.bg,
         )
         Spacer(Modifier.width(11.dp))
         Text(
             text = buildAnnotatedString {
                 append("Turri")
-                withStyle(SpanStyle(color = Accent)) { append("Tell") }
+                withStyle(SpanStyle(color = StenoTheme.colors.accent)) { append("Tell") }
                 append("a")
             },
             modifier = Modifier.padding(top = 3.dp),
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
-            color = OnDrawer,
+            color = StenoTheme.colors.bg,
             maxLines = 1,
         )
     }
 }
 
-/** Заголовок с иконкой и список взаимоисключающих вариантов. */
 @Composable
 fun <T> DrawerOptionGroup(
     title: String,
-    icon: ImageVector,
+    icon: Painter,
     options: List<T>,
     selected: T,
     label: (T) -> String,
@@ -173,8 +172,8 @@ fun <T> DrawerOptionGroup(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = OnDrawer)
-            Text(title, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = OnDrawer, maxLines = 1)
+            Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = StenoTheme.colors.bg)
+            Text(title, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = StenoTheme.colors.bg, maxLines = 1)
         }
         Spacer(Modifier.height(7.dp))
         options.forEach { option ->
@@ -188,7 +187,6 @@ fun <T> DrawerOptionGroup(
     }
 }
 
-/** Один вариант: выбранный выделен светлой «пилюлей» с тёмным текстом. */
 @Composable
 fun DrawerOption(
     text: String,
@@ -202,7 +200,7 @@ fun DrawerOption(
             .fillMaxWidth()
             .height(36.dp)
             .clip(OptionShape)
-            .background(if (selected) PillBackground else Color.Transparent)
+            .background(if (selected) StenoTheme.colors.bg else Color.Transparent)
             .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -211,11 +209,10 @@ fun DrawerOption(
             text = text,
             modifier = Modifier.weight(1f),
             fontSize = 16.sp,
-            color = if (selected) PillText else OnDrawer,
+            color = if (selected) StenoTheme.colors.text else StenoTheme.colors.bg,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         trailing?.invoke()
     }
 }
-
